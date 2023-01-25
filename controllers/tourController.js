@@ -29,7 +29,7 @@ exports.getAllTours = async (req, res) => {
 
       query = query.sort(sortBy);
     } else {
-      query = query.sort('-createdAt');
+      query = query.sort('name');
     }
 
     // field limiting
