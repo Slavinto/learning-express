@@ -1,4 +1,12 @@
 const Tour = require('../models/tour-model');
+const APIFeatures = require('../utils/features');
+
+exports.aliasTopTours = (req, res, next) => {
+  req.query.limit = '5';
+  req.query.sort = '-ratingsAverage, price';
+  req.query.fields = 'name, price, ratingsAverage, summary, difficulty';
+  next();
+};
 
 //================================================
 // Middleware
@@ -6,55 +14,13 @@ const Tour = require('../models/tour-model');
 // tour router request handlers
 exports.getAllTours = async (req, res) => {
   try {
-    // filtering
-    let queryObject = { ...req.query };
-    const excludedFields = ['page', 'sort', 'limit', 'fields'];
-    excludedFields.forEach((field) => {
-      if (queryObject[field]) delete queryObject[field];
-    });
-
-    // advanced filtering
-    let queryString = JSON.stringify(queryObject);
-    queryString = queryString.replace(
-      /\b(gte|gt|lte|lt)\b/g,
-      (match) => `$${match}`
-    );
-    queryObject = JSON.parse(queryString);
-
-    let query = Tour.find(queryObject);
-
-    // sorting
-    if (req.query.sort) {
-      const sortBy = req.query.sort.split(',').join(' ');
-
-      query = query.sort(sortBy);
-    } else {
-      query = query.sort('name');
-    }
-
-    // field limiting
-    if (req.query.fields) {
-      const fields = req.query.fields.split(',').join(' ');
-      query = query.select(fields);
-    } else {
-      query = query.select('-__v');
-    }
-
-    // pagination
-    // if we have limit = 10 then we must skip 10 first results for page 2 : 11-20
-
-    const page = +req.query.page || 1;
-    const limit = +req.query.limit || 30;
-    const skip = limit * (page - 1);
-    query = query.skip(skip).limit(limit);
-
-    if (req.query.page) {
-      const numTours = await Tour.countDocuments();
-      if (skip >= numTours) throw new Error('This page does not exist');
-    }
-
     // execute the query
-    const tours = await query;
+    const features = new APIFeatures(Tour.find(), req.query)
+      .filter()
+      .sort()
+      .limit()
+      .paginate();
+    const tours = await features.query;
 
     res.status(200).json({
       requestTime: req.requestTime,
@@ -136,6 +102,99 @@ exports.deleteTour = async (req, res) => {
     res.status(204).json({
       status: 'success',
       data: null,
+    });
+  } catch (error) {
+    res.status(404).json({
+      status: 'failed',
+      message: error.message,
+    });
+  }
+};
+
+exports.getTourStats = async (req, res) => {
+  try {
+    const stats = await Tour.aggregate([
+      { $match: { ratingsAverage: { $gte: 4.5 } } },
+      {
+        $group: {
+          _id: { $toUpper: '$difficulty' },
+          numTours: { $sum: 1 },
+          numRatings: { $sum: '$ratingsQuantity' },
+          avgRating: { $avg: '$ratingsAverage' },
+          avgPrice: { $avg: '$price' },
+          minPrice: { $min: '$price' },
+          maxPrice: { $max: '$price' },
+        },
+      },
+      {
+        $sort: {
+          avgPrice: 1,
+        },
+      },
+      // {
+      //   $match: {
+      //     _id: {
+      //       $ne: 'EASY',
+      //     },
+      //   },
+      // },
+    ]);
+
+    res.status(200).json({
+      status: 'success',
+      data: {
+        stats,
+      },
+    });
+  } catch (error) {
+    res.status(404).json({
+      status: 'failed',
+      message: error.message,
+    });
+  }
+};
+
+exports.getMonthlyPlan = async (req, res) => {
+  try {
+    const year = +req.params.year;
+    const plan = await Tour.aggregate([
+      {
+        $unwind: '$startDates',
+      },
+      {
+        $match: {
+          startDates: {
+            $gte: new Date(`${year}-01-01`),
+            $lte: new Date(`${year}-12-31`),
+          },
+        },
+      },
+      {
+        $group: {
+          _id: { $month: '$startDates' },
+          numTourStarts: { $sum: 1 },
+          tours: { $push: '$name' },
+        },
+      },
+      {
+        $addFields: { month: '$_id' },
+      },
+      {
+        $project: { _id: 0 },
+      },
+      {
+        $sort: { numTourStarts: -1 },
+      },
+      {
+        $limit: 12,
+      },
+    ]);
+
+    res.status(200).json({
+      status: 'success',
+      data: {
+        plan,
+      },
     });
   } catch (error) {
     res.status(404).json({
