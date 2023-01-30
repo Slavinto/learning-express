@@ -6,8 +6,13 @@ const handleCastErrorDB = (err) => {
 };
 
 const handleDuplicateFields = (err) => {
-  console.log(err);
-  const message = `Duplicate field value: ${err.keyValue}`;
+  const message = `Duplicate field value: ${err.keyValue.name}`;
+  return new AppError(message, 400);
+};
+
+const handleValidationErrorDB = (err) => {
+  const errors = Object.values(err.errors).map((er) => er.message);
+  const message = `Invalid value: ${errors.join(', ')}`;
   return new AppError(message, 400);
 };
 
@@ -46,12 +51,15 @@ module.exports = (err, req, res, next) => {
   if (process.env.NODE_ENV === 'development') {
     sendErrorDev(err, res);
   } else if (process.env.NODE_ENV === 'production') {
-    const error = { ...err };
-    if (error.name === 'CastError') {
-      handleCastErrorDB(error);
+    let error;
+    if (err.name === 'CastError') {
+      error = handleCastErrorDB(err);
     }
-    if (error.code === 11000) {
-      handleDuplicateFields(error);
+    if (err.code === 11000) {
+      error = handleDuplicateFields(err);
+    }
+    if (err.name === 'ValidationError') {
+      error = handleValidationErrorDB(err);
     }
     sendErrorProd(error, res);
   }
