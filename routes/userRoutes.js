@@ -1,4 +1,5 @@
 const express = require('express');
+const { signup } = require('../controllers/authController');
 const {
   getAllUsers,
   createUser,
@@ -9,6 +10,8 @@ const {
 // ====================================================
 // initializing express router - mounting the router
 const router = express.Router();
+
+router.post('/signup', signup);
 
 router.route('/').get(getAllUsers).post(createUser);
 router.route('/:id').get(getUserById).patch(updateUser).delete(deleteUser);
