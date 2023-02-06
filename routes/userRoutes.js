@@ -22,6 +22,8 @@ const { protect } = require('../controllers/authController');
 // initializing express router - mounting the router
 const router = express.Router();
 
+// '/' === 'api/v1/users'
+
 router.post('/signup', signup);
 router.post('/login', login);
 router.post('/forgotPassword', forgotPassword);

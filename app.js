@@ -8,6 +8,7 @@ const hpp = require('hpp');
 
 const tourRouter = require('./routes/tourRoutes');
 const userRouter = require('./routes/userRoutes');
+const reviewRouter = require('./routes/reviewRoutes');
 const AppError = require('./utils/app-error');
 const globalErrorHandler = require('./controllers/errorController');
 
@@ -72,6 +73,7 @@ app.use((req, res, next) => {
 // using router for certain route - middleware
 app.use('/api/v1/tours', tourRouter);
 app.use('/api/v1/users', userRouter);
+app.use('/api/v1/reviews', reviewRouter);
 
 // if none of the above routehandlers was triggered handle the requested route as not found
 app.all('*', (req, res, next) => {

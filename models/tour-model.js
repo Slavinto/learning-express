@@ -128,6 +128,15 @@ tourSchema.virtual('durationWeeks').get(function () {
   return this.duration / 7;
 });
 
+// virtual populate
+tourSchema.virtual('reviews', {
+  ref: 'Review',
+  // a field name in Review model where a ref to this model is stored
+  foreignField: 'tour',
+  // a field in current model where the id is stored
+  localField: '_id',
+});
+
 // save create middleware
 tourSchema.pre('save', function (next) {
   this.slug = slugify(this.name, { lower: true });
@@ -135,6 +144,14 @@ tourSchema.pre('save', function (next) {
 });
 
 // query middleware
+tourSchema.pre(/^find/, function (next) {
+  this.populate({
+    path: 'guides',
+    select: '-__v -passwordChangedAt',
+  });
+  next();
+});
+
 tourSchema.pre(/^find/, function (next) {
   this.find({ secretTour: { $ne: true } });
   this.start = Date.now();
