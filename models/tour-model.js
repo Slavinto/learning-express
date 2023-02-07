@@ -134,6 +134,7 @@ tourSchema.virtual('reviews', {
   // a field name in Review model where a ref to this model is stored
   foreignField: 'tour',
   // a field in current model where the id is stored
+  // '_id' in local model is called 'tour' in foreign model
   localField: '_id',
 });
 

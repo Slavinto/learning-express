@@ -1,6 +1,7 @@
 const User = require('../models/user-model');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/app-error');
+const factory = require('./handler-factory');
 
 const filterObj = (obj, ...fields) => {
   const outputObj = {};
@@ -76,9 +77,4 @@ exports.updateUser = (req, res) => {
   });
 };
 
-exports.deleteUser = (req, res) => {
-  res.status(500).json({
-    status: 'error',
-    message: 'Delete user route is not yet implemented',
-  });
-};
+exports.deleteUser = factory.deleteOne(User);

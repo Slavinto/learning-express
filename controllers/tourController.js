@@ -2,6 +2,7 @@ const Tour = require('../models/tour-model');
 const APIFeatures = require('../utils/features');
 const AppError = require('../utils/app-error');
 const catchAsync = require('../utils/catchAsync');
+const factory = require('./handler-factory');
 
 exports.aliasTopTours = (req, res, next) => {
   req.query.limit = '5';
@@ -33,7 +34,7 @@ exports.getAllTours = catchAsync(async (req, res, next) => {
 
 exports.getTourById = catchAsync(async (req, res, next) => {
   const { id } = req.params;
-  const tour = await Tour.findById(id);
+  const tour = await Tour.findById(id).populate('reviews');
 
   if (!tour) {
     return next(new AppError(`Tour with id ${id} doesn't exist`, 404));
@@ -78,18 +79,20 @@ exports.updateTour = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.deleteTour = catchAsync(async (req, res, next) => {
-  const { id } = req.params;
-  const tour = await Tour.findByIdAndRemove(id);
-  res.status(204).json({
-    status: 'success',
-    data: null,
-  });
+exports.deleteTour = factory.deleteOne(Tour);
+// exports.deleteTour = catchAsync(async (req, res, next) => {
+//   const { id } = req.params;
+//   const tour = await Tour.findByIdAndRemove(id);
 
-  if (!tour) {
-    return next(new AppError(`Tour with id ${id} doesn't exist`, 404));
-  }
-});
+//   if (!tour) {
+//     return next(new AppError(`Tour with id ${id} doesn't exist`, 404));
+//   }
+
+//   res.status(204).json({
+//     status: 'success',
+//     data: null,
+//   });
+// });
 
 exports.getTourStats = catchAsync(async (req, res, next) => {
   const stats = await Tour.aggregate([

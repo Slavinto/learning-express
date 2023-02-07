@@ -18,6 +18,7 @@ const {
 } = require('../controllers/userController');
 
 const { protect } = require('../controllers/authController');
+
 // ====================================================
 // initializing express router - mounting the router
 const router = express.Router();
