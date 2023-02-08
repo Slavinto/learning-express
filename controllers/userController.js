@@ -15,16 +15,6 @@ const filterObj = (obj, ...fields) => {
 
 // ===============================================
 // user router request handlers
-exports.getAllUsers = catchAsync(async (req, res, next) => {
-  const users = await User.find();
-
-  res.status(200).json({
-    requestTime: req.requestTime,
-    status: 'success',
-    results: `${users.length}`,
-    data: { users },
-  });
-});
 
 exports.updateMyProfile = catchAsync(async (req, res, next) => {
   // create error if user posts password data
@@ -56,25 +46,16 @@ exports.deleteMyAccount = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.getUserById = (req, res) => {
-  res.status(500).json({
-    status: 'error',
-    message: 'Get user by id route is not yet implemented',
-  });
-};
-
 exports.createUser = (req, res) => {
   res.status(500).json({
     status: 'error',
-    message: 'Create user route is not yet implemented',
+    message: 'Create user route is invalid, please use (/signup) instead',
   });
 };
 
-exports.updateUser = (req, res) => {
-  res.status(500).json({
-    status: 'error',
-    message: 'Update user route is not yet implemented',
-  });
-};
-
+exports.getAllUsers = factory.getAll(User);
+exports.getUserById = factory.getOne(User);
+// for updating user profile info
+// not for updating password
+exports.updateUser = factory.updateOne(User);
 exports.deleteUser = factory.deleteOne(User);
