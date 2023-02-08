@@ -8,6 +8,7 @@ const {
 } = require('../controllers/authController');
 
 const {
+  getMe,
   getAllUsers,
   createUser,
   getUserById,
@@ -17,21 +18,28 @@ const {
   deleteMyAccount,
 } = require('../controllers/userController');
 
-const { protect } = require('../controllers/authController');
+const { protect, restrictTo } = require('../controllers/authController');
 
 //====================================================
 // initializing express router - mounting the router
 const router = express.Router();
 
 // '/' === 'api/v1/users'
-
 router.post('/signup', signup);
 router.post('/login', login);
 router.post('/forgotPassword', forgotPassword);
 router.patch('/resetPassword/:token', resetPassword);
-router.patch('/updateMyPassword', protect, updatePassword);
-router.patch('/updateMyProfile', protect, updateMyProfile);
-router.delete('/deleteMyAccount', protect, deleteMyAccount);
+
+// all routes middleware below are protected
+router.use(protect);
+
+router.get('/me', getMe, getUserById);
+router.patch('/updateMyPassword', updatePassword);
+router.patch('/updateMyProfile', updateMyProfile);
+router.delete('/deleteMyAccount', deleteMyAccount);
+
+// restricts certain routes to certain users
+router.use(restrictTo('admin'));
 
 router.route('/').get(getAllUsers).post(createUser);
 router.route('/:id').get(getUserById).patch(updateUser).delete(deleteUser);

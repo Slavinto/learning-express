@@ -13,12 +13,19 @@ const {
 // initializing express router - mounting the router
 const router = express.Router({ mergeParams: true });
 
+// protect all routes below
+router.use(protect);
+
 // '/' === 'api/v1/reviews'
 router
   .route('/')
   .get(getAllReviews)
   .post(protect, restrictTo('user'), setTourAndUserIds, createReview);
 
-router.route('/:id').get(getReview).delete(deleteReview).patch(updateReview);
+router
+  .route('/:id')
+  .get(getReview)
+  .delete(restrictTo('user', 'admin'), deleteReview)
+  .patch(restrictTo('user', 'admin'), updateReview);
 
 module.exports = router;

@@ -16,6 +16,11 @@ const filterObj = (obj, ...fields) => {
 // ===============================================
 // user router request handlers
 
+exports.getMe = (req, res, next) => {
+  req.params.id = req.user.id;
+  next();
+};
+
 exports.updateMyProfile = catchAsync(async (req, res, next) => {
   // create error if user posts password data
   if (req.body.password || req.body.passwordConfirm) {
